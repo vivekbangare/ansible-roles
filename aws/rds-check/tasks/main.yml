@@ -1,0 +1,16 @@
+- name: Check if RDS instance exists
+  command: >
+    aws rds describe-db-instances
+    --region "{{ aws_region }}"
+    --db-instance-identifier "{{ rds_instance_name }}"
+  register: rds_instance_info
+  ignore_errors: true
+
+- name: Print RDS instance info
+  debug:
+    var: rds_instance_info
+
+- name: Fail if RDS instance does not exist
+  fail:
+    msg: "RDS instance {{ rds_instance_name }} does not exist."
+  when: rds_instance_info.rc != 0

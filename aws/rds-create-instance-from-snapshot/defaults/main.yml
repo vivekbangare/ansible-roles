@@ -1,0 +1,9 @@
+rds_instance_name: my-new-rds-instance
+rds_snapshot_name: my-rds-snapshot
+rds_subnet_group: my-rds-subnet-group
+rds_security_group: my-rds-security-group
+rds_instance_type: db.t2.micro
+rds_master_username: my-rds-user
+rds_master_password: my-rds-password
+rds_engine: mysql
+rds_port: 3306

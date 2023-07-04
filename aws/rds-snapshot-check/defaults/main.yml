@@ -1,0 +1,4 @@
+---
+# Default values for RDS Snapshot Check Ansible Role
+
+rds_snapshot_name: ""

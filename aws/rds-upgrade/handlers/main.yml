@@ -1,0 +1,15 @@
+---
+- name: Copy rds_waiter.py script to remote host
+  copy:
+    src: rds_waiter.py
+    dest: "{{ lookup('env', 'pwd') }}/rds_waiter.py"
+
+- name: Wait for RDS instance modification to complete
+  async: 60
+  poll: 5
+  command: rds_waiter.py
+  args:
+    db_instance_identifier: "{{ rds_instance_name }}"
+    region: "{{ aws_region }}"
+    state: available
+  listen: "RDS instance upgrade completed"

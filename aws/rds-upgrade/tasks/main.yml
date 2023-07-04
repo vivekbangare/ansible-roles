@@ -1,0 +1,13 @@
+---
+- name: Upgrade RDS instance
+  rds:
+    region: "{{ aws_region }}"
+    command: modify
+    db_instance_identifier: "{{ rds_instance_name }}"
+    db_instance_class: "{{ rds_instance_type }}"
+  register: rds_modify_result
+
+- name: Trigger the RDS instance upgrade completed handler
+  meta: flush_handlers
+  when: rds_modify_result.changed
+  listen: "RDS instance upgrade task completed"

@@ -1,0 +1,5 @@
+- name: Delete RDS snapshot
+  rds_snapshot:
+    region: "{{ aws_region }}"
+    command: delete
+    snapshot_identifier: "{{ rds_snapshot_name }}"

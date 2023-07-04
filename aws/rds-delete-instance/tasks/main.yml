@@ -1,0 +1,6 @@
+---
+- name: Delete RDS instance
+  rds:
+    region: "{{ aws_region }}"
+    command: delete
+    db_instance_identifier: "{{ rds_instance_name }}"

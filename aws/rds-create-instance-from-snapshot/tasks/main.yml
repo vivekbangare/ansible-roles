@@ -1,0 +1,13 @@
+- name: Create RDS instance from snapshot
+  rds:
+    region: "{{ aws_region }}"
+    command: create
+    db_instance_identifier: "{{ rds_instance_name }}"
+    snapshot_identifier: "{{ rds_snapshot_name }}"
+    db_subnet_group_name: "{{ rds_subnet_group }}"
+    vpc_security_group_ids: "{{ rds_security_group }}"
+    db_instance_class: "{{ rds_instance_type }}"
+    engine: "{{ rds_engine }}"
+    port: "{{ rds_port }}"
+    master_username: "{{ rds_master_username }}"
+    master_user_password: "{{ rds_master_password }}"

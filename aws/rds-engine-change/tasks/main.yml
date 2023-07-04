@@ -1,0 +1,54 @@
+- name: Set desired timeout
+  set_fact:
+    desired_timeout: 100
+
+- name: Set desired end time
+  set_fact:
+    desired_end_time: "{{ (lookup('pipe', 'date -u +%s')).split('\n')[0] | int + desired_timeout }}"
+
+- name: Retrieve current engine version
+  command: >
+    aws rds describe-db-instances 
+    --region "{{ aws_region }}" 
+    --db-instance-identifier "{{ rds_instance_name }}" 
+    --query 'DBInstances[0].EngineVersion' --output text
+  register: engine_version_output
+
+- name: Extract current engine version
+  set_fact:
+    current_engine_version: "{{ engine_version_output.stdout }}"
+
+- name: Print current engine version
+  debug:
+    var: current_engine_version
+
+- name: Modify RDS Engine Version
+  command: >
+    aws rds modify-db-instance
+    --db-instance-identifier "{{ rds_instance_name }}"
+    --engine-version "{{ engine_version }}"
+    --allow-major-version-upgrade
+    --apply-immediately
+  register: result
+
+- name: Wait for RDS engine version update
+  block:
+    - name: Check if engine version update is complete
+      command: "aws rds describe-db-instances --db-instance-identifier {{ rds_instance_name }}"
+      register: describe_instance_result
+      retries: 200
+      delay: 10
+      until: "'available' in (describe_instance_result.stdout | from_json | json_query('DBInstances[].DBInstanceStatus')) and '{{ current_engine_version }}' not in (describe_instance_result.stdout | from_json | json_query('DBInstances[].EngineVersion')) and '{{ engine_version }}' in (describe_instance_result.stdout | from_json | json_query('DBInstances[].EngineVersion'))"
+      when: result is succeeded
+      tags:
+        - check_engine_version
+
+    - name: Display upgrade success message
+      debug:
+        msg: "RDS instance {{ rds_instance_name }} has been upgraded to engine version {{ engine_version }} successfully."
+      when: describe_instance_result.stdout | from_json | json_query('DBInstances[].EngineVersion') == [engine_version]
+
+    - name: Fail if engine version update is not complete
+      fail:
+        msg: "RDS engine version update for {{ rds_instance_name }} did not complete within the specified timeout."
+      when: "'available' not in (describe_instance_result.stdout | from_json | json_query('DBInstances[].DBInstanceStatus'))"

@@ -1,0 +1,3 @@
+---
+rds_instance_name: my-rds-instance
+rds_instance_type: db.t3.small

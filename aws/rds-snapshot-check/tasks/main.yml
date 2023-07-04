@@ -1,0 +1,19 @@
+- name: List RDS snapshots
+  command:
+    cmd: "aws rds describe-db-snapshots --region {{ aws_region }}"
+  register: rds_snapshot_info
+
+- name: Check if snapshot exists
+  set_fact:
+    snapshot_exists: "{{ rds_snapshot_name not in rds_snapshot_info.stdout | from_json | json_query('DBSnapshots[].DBSnapshotIdentifier') }}"
+  changed_when: False
+
+- name: Print message if snapshot exists
+  debug:
+    msg: "RDS snapshot '{{ rds_snapshot_name }}' exists."
+  when: snapshot_exists is not defined or snapshot_exists != True
+
+- name: Print message if snapshot does not exist
+  debug:
+    msg: "RDS snapshot '{{ rds_snapshot_name }}' does not exist."
+  when: snapshot_exists == True

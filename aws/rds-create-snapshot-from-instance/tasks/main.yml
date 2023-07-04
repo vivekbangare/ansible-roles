@@ -1,0 +1,28 @@
+- name: Create RDS snapshot
+  command:
+    cmd: "aws rds create-db-snapshot --db-instance-identifier {{ rds_instance_name }} --db-snapshot-identifier {{ snapshot_name }}"
+  register: snapshot_result
+  ignore_errors: true
+
+- name: Set desired timeout
+  set_fact:
+    desired_timeout: 300
+
+- name: Set desired end time
+  set_fact:
+    desired_end_time: "{{ (lookup('pipe', 'date -u +%s')).split('\n')[0] | int + desired_timeout }}"
+
+- name: Wait for RDS snapshot to be available
+  block:
+    - name: Check if snapshot is available
+      command: "aws rds describe-db-snapshots --db-snapshot-identifier {{ snapshot_name }}"
+      register: describe_snapshot_result
+      retries: 100
+      delay: 10
+      until: "'available' in (describe_snapshot_result.stdout | from_json | json_query('DBSnapshots[].Status'))"
+      when: snapshot_result is success
+
+    - name: Fail if snapshot is not available
+      fail:
+        msg: "RDS snapshot {{ snapshot_name }} did not become available within the specified timeout."
+      when: "'available' not in (describe_snapshot_result.stdout | from_json | json_query('DBSnapshots[].Status'))"
